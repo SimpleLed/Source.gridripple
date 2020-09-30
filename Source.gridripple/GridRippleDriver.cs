@@ -9,6 +9,7 @@ namespace Source.gridripple
 {
     public class GridRipple : ISimpleLed
     {
+        public event EventHandler DeviceRescanRequired;
         public ControlDevice.LedUnit[] leds = new ControlDevice.LedUnit[60*12];
 
         public void Dispose()
@@ -68,8 +69,18 @@ namespace Source.gridripple
             {
                 X = (int)(e.FloatX * myControlDevice.GridWidth),
                 Y = (int)(e.FloatY * myControlDevice.GridHeight),
+                Distance = 0,
+                Strength = 1,
+                R=255,G=0,B=255
+            });
+
+            Particles.Add(new Particle
+            {
+                X = (int)(e.FloatX * myControlDevice.GridWidth),
+                Y = (int)(e.FloatY * myControlDevice.GridHeight),
                 Distance = 1,
-                Strength = 1
+                Strength = 1,
+                R=0,G=0,B=0
             });
         }
         
@@ -86,23 +97,8 @@ namespace Source.gridripple
                     ledUnit.Color=new LEDColor(255,0,0);
                 }
 
-                ledUnit.Color = ledUnit.Color.LerpTo(new LEDColor(255, 0, 0), 0.1f);
+                ledUnit.Color = ledUnit.Color.LerpTo(new LEDColor(255, 0, 0), 0.01f);
 
-                //if (ledUnit.Color.Red < 255)
-                //{
-                //    ledUnit.Color.Red = ledUnit.Color.Red +1;
-                //}
-
-                //if (ledUnit.Color.Green > 0)
-                //{
-                //    ledUnit.Color.Green = ledUnit.Color.Green / 2;
-                //}
-
-
-                //if (ledUnit.Color.Blue > 0)
-                //{
-                //    ledUnit.Color.Blue = ledUnit.Color.Blue / 2;
-                //}
             }
 
             foreach (Particle particle in Particles.ToList())
@@ -117,15 +113,18 @@ namespace Source.gridripple
                 {
                     for (int y = top; y < bottom; y++)
                     {
-                        myControlDevice.SetGridLED(x,y,new LEDColor(0, 0, (int)(255f * particle.Strength)));
+                        if (x == left || x + 1 == right || y == top || y + 1 == bottom)
+                        {
+                            myControlDevice.SetGridLED(x, y, new LEDColor((int)((float)particle.R * particle.Strength), (int)((float)particle.G * particle.Strength), (int) ((float)particle.B * particle.Strength)));
+                        }
                     }
                 }
 
                 particle.Distance++;
-                particle.Strength = particle.Strength * 0.7f;
+                particle.Strength = particle.Strength * 0.95f;
             }
 
-            List<Particle> deadParticles = Particles.Where(x => x.Strength < 0.05f).ToList();
+            List<Particle> deadParticles = Particles.ToList().Where(x => x.Strength < 0.05f).ToList();
 
             foreach (var deadParticle in deadParticles)
             {
@@ -139,6 +138,11 @@ namespace Source.gridripple
             public int Y { get; set; }
             public int Distance { get; set; } = 1;
             public float Strength { get; set; } = 1f;
+
+            public int R { get; set; }
+            public int G { get; set; }
+            public int B { get; set; }
+
         }
 
         public List<Particle> Particles { get; set; } = new List<Particle>();
@@ -150,7 +154,7 @@ namespace Source.gridripple
                 Author = "mad ninja",
                 Blurb = "Example effect with 2d support and basic interactivity",
                 GitHubLink = "https://github.com/SimpleLed/Source.gridripple",
-                CurrentVersion = new ReleaseNumber(0,0,0,1001),
+                CurrentVersion = new ReleaseNumber(0,0,0,1002),
                 Id = Guid.Parse("78c8f449-0148-476b-a6de-b490a9f92017"),
                 IsPublicRelease = false,
                 IsSource = true,
